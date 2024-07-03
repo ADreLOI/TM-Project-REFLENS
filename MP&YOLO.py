@@ -27,11 +27,10 @@ while cap.isOpened():
     # Process the frame for hand detection
     hands_detected = hands.process(frame_rgb)
     # If hands are detected, draw landmarks and connections on the frame
-
+    results = model(frame, conf=0.5)
     if hands_detected.multi_hand_landmarks:
-        # Landmarks of the hand detected
+        #Landmarks of the hand detected
         handsLandmarks = hands_detected.multi_hand_landmarks[0]
-        detect_foul(handsLandmarks,cv2,frame)
         for hand_landmarks in hands_detected.multi_hand_landmarks:
             mp_drawing.draw_landmarks(
                 frame,
@@ -40,18 +39,18 @@ while cap.isOpened():
                 mp_drawing.DrawingSpec(color=(176, 132, 255), thickness=2, circle_radius=2),
                 mp_drawing.DrawingSpec(color=(0, 0, 255), thickness=2)
             )
+            # YOLOv8
+        results = model(frame, conf=0.5)
+        results_keypoint = results[0].keypoints.xyn.cpu().numpy()
+        for result_keypoint in results_keypoint:
+            if len(result_keypoint) == 17:
+                print("KeyPoint:" + str(result_keypoint[10][1]))
+        detect_foul(handsLandmarks,cv2,frame)
 
-
-    #YOLOv8
-    results = model(frame, conf=0.5)
-    results_keypoint = results[0].keypoints.xyn.cpu().numpy()
     #Extracting keypoints
     #Yolo mappa i keypoints con coordinate X e Y
     # --> X va da sinistra dello schermo fino a destra da 0 a 1
     # --> Y va dal basso dello schermo fino in alto da 1 a 0
-    for result_keypoint in results_keypoint:
-        if len(result_keypoint) == 17:
-            print("KeyPoint:"+ str(result_keypoint[10][1]))
 
     annotated_frame = results[0].plot(boxes=False)
 
