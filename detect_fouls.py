@@ -1,3 +1,4 @@
+import cv2
 import numpy as np
 import math
 #ciao a tutti ragazzi
@@ -45,7 +46,7 @@ def detect_foul(handsLandmarks,cv2,frame):
     if diff_y >= distance:
         cv2.putText(
             img=frame,
-            text="Middle AND Wrist TOGETHER",
+            text="Middle AND Wrist NOT TOUCHING",
             org=(200, 200),
             fontFace=cv2.FONT_HERSHEY_DUPLEX,
             fontScale=3.0,
@@ -75,3 +76,4 @@ def normalizeYCoordinates(max_y, min_y, y_to_normalize):
     normalizedY = (y_to_normalize - min_y) / (max_y - min_y)
     return normalizedY
 
+#def stop_the_clock():
