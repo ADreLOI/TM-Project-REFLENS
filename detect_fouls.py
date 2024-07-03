@@ -1,6 +1,6 @@
 import numpy as np
 import math
-
+#ciao a tutti ragazzi
 max_x = 1.0
 max_y = 0.0
 min_x = 0.0
