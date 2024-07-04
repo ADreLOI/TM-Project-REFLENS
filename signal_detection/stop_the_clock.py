@@ -1,6 +1,6 @@
 # signal_detection/stop_clock.py
 
-def stop_the_clock(handsLandmarks, cv2, frame):
+def stop_the_clock(handsLandmarks, bodyLandamrks, cv2, frame):
     # Implement detection logic here
     thumb_tip = handsLandmarks.landmark[4]
     index_tip = handsLandmarks.landmark[8]

@@ -77,13 +77,11 @@ def process_stream(video_source):
         hands_detected = hands.process(frame_rgb)
         # If hands are detected, draw landmarks and connections on the frame
 
+        # YOLOv8 pose detection
+        results = model(frame, conf=0.5)
         if hands_detected.multi_hand_landmarks:
             # Landmarks of the hand detected
             handsLandmarks = hands_detected.multi_hand_landmarks[0]
-            for detector_name, detector_function in signal_detectors.items():
-                detector_function(handsLandmarks, cv2, frame)
-                # Introduce a small delay
-                time.sleep(0.05)  # 50 milliseconds delay
 
             for hand_landmarks in hands_detected.multi_hand_landmarks:
                 mp_drawing.draw_landmarks(
@@ -93,19 +91,22 @@ def process_stream(video_source):
                     mp_drawing.DrawingSpec(color=(176, 132, 255), thickness=2, circle_radius=2),
                     mp_drawing.DrawingSpec(color=(0, 0, 255), thickness=2)
                 )
+            # YOLOv8 pose detection
+            results_keypoint = results[0].keypoints.xyn.cpu().numpy()
+            # Extracting keypoints
+            # Yolo mappa i keypoints con coordinate X e Y
+            # --> X va da sinistra dello schermo fino a destra da 0 a 1
+            # --> Y va dal basso dello schermo fino in alto da 1 a 0
+            for result_keypoint in results_keypoint:
+                if len(result_keypoint) == 17:
+                    print("KeyPoint:" + str(result_keypoint[10][1]))
 
-        # YOLOv8 pose detection
-        body_results = model(frame, conf=0.5)
-        results_keypoint = body_results[0].keypoints.xyn.cpu().numpy()
-        # Extracting keypoints
-        # Yolo mappa i keypoints con coordinate X e Y
-        # --> X va da sinistra dello schermo fino a destra da 0 a 1
-        # --> Y va dal basso dello schermo fino in alto da 1 a 0
-        for result_keypoint in results_keypoint:
-            if len(result_keypoint) == 17:
-                print("KeyPoint:" + str(result_keypoint[10][1]))
+            for detector_name, detector_function in signal_detectors.items():
+                detector_function(handsLandmarks, results_keypoint, cv2, frame)
+                # Introduce a small delay
+                time.sleep(0.1)  # 100 milliseconds delay
 
-        annotated_frame = body_results[0].plot(boxes=False)
+        annotated_frame = results[0].plot(boxes=False)
 
         cv2.imshow('RefLens - Stream Analysis', annotated_frame)
 

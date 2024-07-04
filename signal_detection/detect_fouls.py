@@ -1,4 +1,11 @@
 import math
+import sys
+import os
+import importlib
+
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Dynamics'))
+
+#from hand import Hand
 
 max_x = 1.0
 max_y = 0.0
@@ -7,10 +14,30 @@ min_y = 1.0
 distance = 0.0
 
 
-def detect_fouls(handsLandmarks, cv2, frame):
+def detect_fouls(handsLandmarks, bodyLandamrks, cv2, frame):
     # Landmarks of each hand's point
-    thumb_tip = handsLandmarks.landmark[0]
+    palm = handsLandmarks.landmark[0]
+    thumb_b = handsLandmarks.landmark[1]
+    thumb_p = handsLandmarks.landmark[2]
+    thumb_ip = handsLandmarks.landmark[3]
+    thumb_tip = handsLandmarks.landmark[4]
+    index_b = handsLandmarks.landmark[5]
+    index_p = handsLandmarks.landmark[6]
+    index_ip = handsLandmarks.landmark[7]
+    index_tip = handsLandmarks.landmark[8]
+    middle_b = handsLandmarks.landmark[9]
+    middle_p = handsLandmarks.landmark[10]
+    middle_ip = handsLandmarks.landmark[11]
     middle_tip = handsLandmarks.landmark[12]
+    ring_b = handsLandmarks.landmark[13]
+    ring_p = handsLandmarks.landmark[14]
+    ring_ip = handsLandmarks.landmark[15]
+    ring_tip = handsLandmarks.landmark[16]
+    pinky_b = handsLandmarks.landmark[17]
+    pinky_p = handsLandmarks.landmark[18]
+    pinky_ip = handsLandmarks.landmark[19]
+    pinky_tip = handsLandmarks.landmark[20]
+
     global max_x, max_y, min_x, min_y, distance
     print("MAX E MIN Y" + str(max_y) + " " + str(min_y))
     print("LANDMARKS Y" + str(handsLandmarks.landmark[0].y) + " " + str(handsLandmarks.landmark[12].y))
