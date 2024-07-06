@@ -10,17 +10,19 @@ import os
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
 # Append the path for the processing script
-#sys.path.append(os.path.join(current_dir, 'Processing'))
+# sys.path.append(os.path.join(current_dir, 'Processing'))
 # Add the root directory of the project to sys.path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 # Import the processing function
 from Processing.video_processing import process_video
 
+
 # Function to handle webcam processing
 def handle_webcam_processing():
     # Call process_video without arguments to use the webcam
     process_video()
+
 
 # Function to handle video file processing
 def handle_video_file_processing():
@@ -51,6 +53,7 @@ root.geometry(f"{window_width}x{window_height}+{x_position}+{y_position}")
 
 # Set window background color
 root.configure(bg='#2E3440')
+
 
 # Function to create image button with hover effect
 def create_image_button(canvas, image_path, x, y, command):

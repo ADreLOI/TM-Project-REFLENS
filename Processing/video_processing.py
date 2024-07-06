@@ -5,6 +5,9 @@ import importlib
 import os
 import time
 
+from Dynamics.hand import Hand
+from Dynamics.body import Body
+
 
 def load_signal_detectors():
     """
@@ -53,7 +56,8 @@ def process_stream(video_source):
 
     # Initialize MediaPipe Hands
     mp_hands = mp.solutions.hands
-    hands = mp_hands.Hands(static_image_mode=False, max_num_hands=1, min_detection_confidence=0.5, min_tracking_confidence=0.5)
+    hands = mp_hands.Hands(static_image_mode=False, max_num_hands=1, min_detection_confidence=0.5,
+                           min_tracking_confidence=0.5)
 
     # Initialize drawing utilities
     mp_drawing = mp.solutions.drawing_utils
@@ -92,17 +96,13 @@ def process_stream(video_source):
                     mp_drawing.DrawingSpec(color=(0, 0, 255), thickness=2)
                 )
             # YOLOv8 pose detection
-            results_keypoint = results[0].keypoints.xyn.cpu().numpy()
-            # Extracting keypoints
-            # Yolo mappa i keypoints con coordinate X e Y
-            # --> X va da sinistra dello schermo fino a destra da 0 a 1
-            # --> Y va dal basso dello schermo fino in alto da 1 a 0
-            for result_keypoint in results_keypoint:
-                if len(result_keypoint) == 17:
-                    print("KeyPoint:" + str(result_keypoint[10][1]))
+            body_keypoints = results[0].keypoints.xyn.cpu().numpy()[0]
+
+            hand = Hand(handsLandmarks)
+            body = Body(body_keypoints)
 
             for detector_name, detector_function in signal_detectors.items():
-                detector_function(handsLandmarks, results_keypoint, cv2, frame)
+                detector_function(hand, body, cv2, frame)
                 # Introduce a small delay
                 time.sleep(0.1)  # 100 milliseconds delay
 
@@ -113,14 +113,13 @@ def process_stream(video_source):
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
-
     cap.release()
     cv2.destroyAllWindows()
+
 
 def process_video(video_path=None):
     """
     Process video file for signal detection.
-
     Args:
         video_path (str): Path to the video file. If None, uses webcam.
     """
