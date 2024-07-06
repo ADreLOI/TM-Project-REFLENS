@@ -10,10 +10,12 @@ import os
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
 # Append the path for the processing script
-sys.path.append(os.path.join(current_dir, 'Processing'))
+#sys.path.append(os.path.join(current_dir, 'Processing'))
+# Add the root directory of the project to sys.path
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 # Import the processing function
-from video_processing import process_video
+from Processing.video_processing import process_video
 
 # Function to handle webcam processing
 def handle_webcam_processing():

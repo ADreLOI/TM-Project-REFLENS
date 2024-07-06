@@ -3,9 +3,7 @@ import sys
 import os
 import importlib
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Dynamics'))
-
-#from hand import Hand
+#sys.path.append(os.path.join(os.path.abspath(__file__), '..', 'Dynamics'))
 
 max_x = 1.0
 max_y = 0.0
@@ -39,8 +37,8 @@ def detect_fouls(handsLandmarks, bodyLandamrks, cv2, frame):
     pinky_tip = handsLandmarks.landmark[20]
 
     global max_x, max_y, min_x, min_y, distance
-    print("MAX E MIN Y" + str(max_y) + " " + str(min_y))
-    print("LANDMARKS Y" + str(handsLandmarks.landmark[0].y) + " " + str(handsLandmarks.landmark[12].y))
+    #print("MAX E MIN Y" + str(max_y) + " " + str(min_y))
+    #print("LANDMARKS Y" + str(handsLandmarks.landmark[0].y) + " " + str(handsLandmarks.landmark[12].y))
 
     # Regolare la chiamata in base alla distanza Confrontate frame per frame che la differenza tra le coordinate y
     # delle dita dal polso sia uguale alla distanza polso dita!
@@ -49,7 +47,7 @@ def detect_fouls(handsLandmarks, bodyLandamrks, cv2, frame):
     # Check to determines the max and min y and x
     if handsLandmarks.landmark[0].y > max_y and handsLandmarks.landmark[12].y < min_y:
         if handsLandmarks.landmark[0].y < 1.0 and handsLandmarks.landmark[12].y > 0.0:
-            print("CHANGE")
+            #print("CHANGE")
             change = True
             max_y = handsLandmarks.landmark[0].y
             min_y = handsLandmarks.landmark[12].y
@@ -67,16 +65,16 @@ def detect_fouls(handsLandmarks, bodyLandamrks, cv2, frame):
         distance = math.sqrt((nWristX - nMiddleX) ** 2 + (nWristY - nMiddleY) ** 2)
 
     diff_y = nWristY - nMiddleY
-    print("Difference between middle finger and wrist:" + str(diff_y))
-    print("Distance between middle finger and wrist:" + str(distance))
+    #print("Difference between middle finger and wrist:" + str(diff_y))
+    #print("Distance between middle finger and wrist:" + str(distance))
 
     if diff_y >= distance:
         cv2.putText(
             img=frame,
             text="Middle AND Wrist TOGETHER",
             org=(200, 200),
-            fontFace=cv2.FONT_HERSHEY_DUPLEX,
-            fontScale=3.0,
+            fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+            fontScale=1,
             color=(125, 246, 55),
             thickness=3
         )

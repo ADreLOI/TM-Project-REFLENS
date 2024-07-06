@@ -1,23 +1,81 @@
 # signal_detection/stop_clock.py
+from Dynamics.hand import Hand
+
 
 def stop_the_clock(handsLandmarks, bodyLandamrks, cv2, frame):
     # Implement detection logic here
-    thumb_tip = handsLandmarks.landmark[4]
-    index_tip = handsLandmarks.landmark[8]
+    hand = Hand(handsLandmarks)
 
     # Example detection logic: Check if thumb and index tips are close
-    distance = ((thumb_tip.x - index_tip.x) ** 2 + (thumb_tip.y - index_tip.y) ** 2) ** 0.5
+    # distance = ((thumb_tip.x - index_tip.x) ** 2 + (thumb_tip.y - index_tip.y) ** 2) ** 0.5
 
     # Debug print statements to verify detection logic
-    print(f"Thumb tip: ({thumb_tip.x}, {thumb_tip.y}), Index tip: ({index_tip.x}, {index_tip.y}), Distance: {distance}")
+    print(
+        f"Thumb tip: ({hand.thumb_tip.x}, {hand.thumb_tip.y}), Palm: ({hand.index_p.x}, {hand.index_p.y}), "
+    )
 
-    if distance < 0.1:
+    if hand.is_hand_opened() and not hand.is_hand_closed() and not hand.is_one() and not hand.is_two() and not hand.is_three():
         cv2.putText(
             img=frame,
-            text="Stop Clock Signal Detected",
+            text="Hand Is Opened",
             org=(50, 50),
             fontFace=cv2.FONT_HERSHEY_SIMPLEX,
             fontScale=1,
             color=(0, 255, 0),
             thickness=2
         )
+
+    if hand.is_hand_closed() and not hand.is_hand_opened() and not hand.is_one() and not hand.is_two() and not hand.is_three():
+        cv2.putText(
+            img=frame,
+            text="Hand Is Closed",
+            org=(50, 50),
+            fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+            fontScale=1,
+            color=(0, 255, 255),
+            thickness=2
+        )
+
+    if hand.is_one() and not hand.is_hand_opened() and not hand.is_hand_closed() and not hand.is_two() and not hand.is_three():
+        cv2.putText(
+            img=frame,
+            text="One",
+            org=(50, 50),
+            fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+            fontScale=1,
+            color=(111, 255, 255),
+            thickness=2
+        )
+
+    if hand.is_two() and not hand.is_hand_opened() and not hand.is_hand_closed() and not hand.is_one() and not hand.is_three():
+        cv2.putText(
+            img=frame,
+            text="Two",
+            org=(50, 50),
+            fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+            fontScale=1,
+            color=(0, 255, 111),
+            thickness=2
+        )
+
+    if hand.is_three() and not hand.is_hand_opened() and not hand.is_hand_closed() and not hand.is_one() and not hand.is_two():
+        cv2.putText(
+            img=frame,
+            text="Three",
+            org=(50, 50),
+            fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+            fontScale=1,
+            color=(0, 111, 255),
+            thickness=2
+        )
+
+    if hand.sui() and not hand.is_three() and not hand.is_hand_opened() and not hand.is_hand_closed() and not hand.is_one() and not hand.is_two():
+       cv2.putText(
+           img=frame,
+           text="Sui Flalafel Merdao macaco rossonero",
+           org=(50, 50),
+           fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+           fontScale=1,
+           color=(255, 0, 0),
+           thickness=2
+       )
