@@ -3,7 +3,7 @@ import math
 
 class Hand:
     MAX_THRESHOLD = 0  # Example threshold, adjust as needed
-    MIN_THRESHOLD = 0  # Example threshold, adjust as needed
+    MIN_THRESHOLD = 0.20  # Example threshold, adjust as needed
 
     def __init__(self, landmarks):
         self.landmarks = landmarks
