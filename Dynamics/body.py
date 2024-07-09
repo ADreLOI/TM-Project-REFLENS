@@ -1,3 +1,5 @@
+import time
+
 from pydantic import BaseModel
 from collections import namedtuple
 import numpy as np
@@ -55,12 +57,11 @@ class Body:
         self.left_ankle = self.get_coordinates('LEFT_ANKLE')
         self.right_ankle = self.get_coordinates('RIGHT_ANKLE')
 
-
     @property
     def is_left_arm_up(self):
         return (self.left_wrist.y < self.left_eye.y < self.left_ear.y and
                 self.left_wrist.y < self.left_elbow.y < self.left_shoulder.y and
-                self.left_elbow.y < self.left_eye.y < self.left_ear.y )
+                self.left_elbow.y < self.left_eye.y < self.left_ear.y)
 
     @property
     def is_right_arm_up(self):
@@ -68,3 +69,42 @@ class Body:
                 self.right_wrist.y < self.right_elbow.y < self.right_shoulder.y and
                 self.right_elbow.y < self.right_eye.y < self.right_ear.y)
 
+    @property
+    def is_left_arm_bending(self):
+        if self.left_hip.y > self.left_wrist.y > self.left_shoulder.y:
+            if self.left_shoulder.x < self.right_shoulder.x or self.right_shoulder.x == self.left_shoulder.x:
+                return self.left_wrist.x > self.left_shoulder.x or self.left_wrist.x == self.left_shoulder.x
+            else:
+                return self.left_wrist.x < self.left_shoulder.x or self.left_wrist.x == self.left_shoulder.x
+
+    @property
+    def is_right_arm_bending(self):
+        if self.right_hip.y > self.right_wrist.y > self.right_shoulder.y:
+            if self.right_shoulder.x > self.left_shoulder.x or self.right_shoulder.x == self.left_shoulder.x:
+                return self.right_wrist.x < self.right_shoulder.x or self.right_wrist.x == self.right_shoulder.x
+            else:
+                return self.right_wrist.x > self.right_shoulder.x or self.right_wrist.x == self.right_shoulder.x
+
+    @property
+    def arms_rotating(self):
+        if self.is_left_arm_bending and self.is_right_arm_bending:
+            min_rotations = 2
+            i = 0
+            while i < min_rotations:
+                starting_timestamp = time.time()
+                starting_position = self.is_wrist_above_the_other
+                time.sleep(0.25)  # rotation takes approximately 250 milliseconds
+                finishing_position = self.is_wrist_above_the_other
+                if starting_timestamp < time.time() and starting_position == finishing_position:
+                    i += 1
+            if i >= min_rotations:
+                return True
+            else:
+                return False
+
+    @property
+    def is_wrist_above_the_other(self):
+        if self.right_wrist.y <= self.left_wrist.y:
+            return True
+        else:
+            return False

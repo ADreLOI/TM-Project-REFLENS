@@ -44,7 +44,7 @@ class Hand:
         return distance
 
     def distance_th(self, point1, point2, threshold):
-        """Calculate the Euclidean distance between plam coordinated and pam coordinates with threshold."""
+        """Calculate the Euclidean distance between palm coordinated and pam coordinates with threshold."""
         return math.sqrt(
             (point1.x - (point2.x + threshold)) ** 2 +
             (point1.y - (point2.y + threshold)) ** 2
@@ -56,23 +56,22 @@ class Hand:
         ip_to_palm = self.distance(finger_ip, self.palm)
         base_to_palm = self.distance(finger_base, self.palm)
         return (
-                tip_to_palm > ip_to_palm > base_to_palm #and
-                #tip_to_palm > base_to_palm
+                tip_to_palm > ip_to_palm > base_to_palm
         )
 
     def is_finger_closed(self, finger_tip, finger_p):
         """Determine if a finger is closed based on the distance from the palm."""
         tip_to_palm = self.distance(finger_tip, self.palm)
         p_to_palm = self.distance(finger_p, self.palm)
-        #self.update_th()
         return (
                 tip_to_palm < p_to_palm and
                 (tip_to_palm < self.MIN_THRESHOLD)
         )
+
     @property
     def is_thumb_in_position(self):
         """Determine if a finger is closed based on the distance from the palm."""
-        if ( self.thumb_tip.x > self.pinky_tip.x ):
+        if self.thumb_tip.x > self.pinky_tip.x:
             thumb_inside = self.thumb_tip.x < self.index_tip.x
         else:
             thumb_inside = self.thumb_tip.x > self.index_tip.x
@@ -80,6 +79,7 @@ class Hand:
                 thumb_inside
         )
 
+    @property
     def is_hand_opened(self):
         """Determine if the hand is opened by checking all fingers."""
         return (
@@ -91,6 +91,7 @@ class Hand:
                 self.is_finger_open(self.pinky_tip, self.pinky_ip, self.pinky_base)
         )
 
+    @property
     def is_hand_closed(self):
         """Determine if the hand is closed by checking all fingers."""
         return (
@@ -102,6 +103,7 @@ class Hand:
                 self.is_finger_closed(self.pinky_tip, self.pinky_p)
         )
 
+    @property
     def is_one(self):
         """Determine if the gesture is 'one' (index finger up)."""
         return (
@@ -113,6 +115,7 @@ class Hand:
                 self.is_finger_closed(self.pinky_tip, self.pinky_p)
         )
 
+    @property
     def is_two(self):
         """Determine if the gesture is 'two' (index and middle fingers up)."""
         return (
@@ -124,6 +127,7 @@ class Hand:
                 self.is_finger_closed(self.pinky_tip, self.pinky_p)
         )
 
+    @property
     def is_three(self):
         """Determine if the gesture is 'three' (thumb, index, and middle fingers up)."""
         return (
@@ -134,6 +138,8 @@ class Hand:
                 self.is_finger_closed(self.ring_tip, self.ring_p) and
                 self.is_finger_closed(self.pinky_tip, self.pinky_p)
         )
+
+    @property
     def sui(self):
         """Determine if the gesture is 'three' (thumb, index, and middle fingers up)."""
         return (
