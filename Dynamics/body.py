@@ -93,7 +93,7 @@ class Body:
             while i < min_rotations:
                 starting_timestamp = time.time()
                 starting_position = self.is_wrist_above_the_other
-                time.sleep(0.25)  # rotation takes approximately 250 milliseconds
+                #time.sleep(0.25)  # rotation takes approximately 250 milliseconds
                 finishing_position = self.is_wrist_above_the_other
                 if starting_timestamp < time.time() and starting_position == finishing_position:
                     i += 1
