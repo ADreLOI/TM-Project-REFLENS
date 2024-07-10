@@ -1,13 +1,10 @@
 
 
-
-def three_points(hand, body, cv2, frame):
-
-    if (body.is_right_arm_up and not hand.is_hand_closed()
-            and hand.is_three()):
+def travelling(hand, body, cv2, frame):
+    if body.detect_rotation(cv2):
         cv2.putText(
             img=frame,
-            text="Three points attempt!",
+            text="Right arm bending",
             org=(50, 50),
             fontFace=cv2.FONT_HERSHEY_SIMPLEX,
             fontScale=1,
@@ -15,4 +12,4 @@ def three_points(hand, body, cv2, frame):
             thickness=2
         )
     else:
-        print(hand.is_three())
+        print("NO")

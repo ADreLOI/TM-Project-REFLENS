@@ -1,5 +1,8 @@
+import os
+import glob
 import time
 
+import cv2
 from pydantic import BaseModel
 from collections import namedtuple
 import numpy as np
@@ -7,6 +10,47 @@ import numpy as np
 # Define a namedtuple for keypoints
 Keypoint = namedtuple('Keypoint', ['x', 'y'])
 
+
+class FoulRecorder:
+    def __init__(self, buffer_size=30):
+        self.buffer = []
+        self.buffer_size = buffer_size
+
+    def update_buffer(self, frame):
+        if len(self.buffer) >= self.buffer_size:
+            self.buffer.pop(0)
+        self.buffer.append(frame)
+
+    def save_foul(self, foul_type):
+        if not self.buffer:
+            return
+
+        # Define directory and file name
+        directory = f"Processing/{foul_type}"
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+        file_name = f"{directory}/{foul_type}_{int(time.time())}.mp4"
+
+        # Define video writer
+        height, width, layers = self.buffer[0].shape
+        fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+        out = cv2.VideoWriter(file_name, fourcc, 20.0, (width, height))
+
+        # Write frames to video
+        for frame in self.buffer:
+            out.write(frame)
+
+        out.release()
+        print(f"Foul video saved: {file_name}")
+
+        # Clear the buffer
+        self.buffer.clear()
+class BufferFrames:
+    static_flag = False
+    index = 0
+    images = []
+    def __init__(self):
+        print("Buffer inizializzato")
 
 class GetKeypoint(BaseModel):
     NOSE:           int = 0
@@ -79,6 +123,7 @@ class Body:
 
     @property
     def is_right_arm_bending(self):
+
         if self.right_hip.y > self.right_wrist.y > self.right_shoulder.y:
             if self.right_shoulder.x > self.left_shoulder.x or self.right_shoulder.x == self.left_shoulder.x:
                 return self.right_wrist.x < self.right_shoulder.x or self.right_wrist.x == self.right_shoulder.x
@@ -93,7 +138,6 @@ class Body:
             while i < min_rotations:
                 starting_timestamp = time.time()
                 starting_position = self.is_wrist_above_the_other
-                #time.sleep(0.25)  # rotation takes approximately 250 milliseconds
                 finishing_position = self.is_wrist_above_the_other
                 if starting_timestamp < time.time() and starting_position == finishing_position:
                     i += 1
@@ -108,3 +152,30 @@ class Body:
             return True
         else:
             return False
+
+    def detect_rotation(self,cv2):
+        print("Rotation function")
+        #Detect traveling position, then analyze bunch of frame after that and check if one wrist is moving down the other
+        #then checking another bunch of frames after to check if it is moving back to starting position.
+        if self.is_right_arm_bending and self.is_left_arm_bending:
+            print("ARMS IN ABS ZONE; POSSIBLE TRAVELLING SIGNAL INCOMING; CHECKING...")
+            BufferFrames.static_flag = True
+            if BufferFrames.index == 150:
+                #Frames collected, starting to analyze
+                BufferFrames.static_flag = False
+                print("PUBLISHING THE VIDEO")
+                out = cv2.VideoWriter("output.mp4", cv2.VideoWriter_fourcc(*"mp4v"), 20.0, (1280,720))
+                for frame in BufferFrames.images:
+                    print(len(BufferFrames.images))
+                    out.write(frame)  # frame is a numpy.ndarray with shape (1280, 720, 3)
+                out.release()
+
+
+def load_images_from_folder(cv2, folder):
+    images = []
+    for filename in os.listdir(folder):
+        print("FILENAME:" + str(filename))
+        img = cv2.imread(os.path.join(folder,filename))
+        if img is not None:
+            images.append(img)
+    return images

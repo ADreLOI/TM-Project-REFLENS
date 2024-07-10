@@ -4,10 +4,11 @@ import mediapipe as mp
 import importlib
 import os
 import time
+import threading
 
 from Dynamics.hand import Hand
 from Dynamics.body import Body
-
+from Dynamics.body import BufferFrames
 
 def load_signal_detectors():
     """
@@ -66,15 +67,16 @@ def process_stream(video_source):
 
     # Open the video source (0 for webcam, or file path)
     cap = cv2.VideoCapture(video_source)
+    #cap.set(cv2.CAP_PROP_BUFFERSIZE, 1);
 
     if not cap.isOpened():
         print(f"Error: Unable to open video source {video_source}")
         return
-
     while cap.isOpened():
         success, frame = cap.read()
         if not success:
             break
+
         # Convert the frame to RGB for MediaPipe
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         # Process the frame for hand detection
@@ -104,11 +106,20 @@ def process_stream(video_source):
             for detector_name, detector_function in signal_detectors.items():
                 detector_function(hand, body, cv2, frame)
                 # Introduce a small delay
-                time.sleep(0.1)  # 100 milliseconds delay
 
         annotated_frame = results[0].plot(boxes=False)
 
         cv2.imshow('RefLens - Stream Analysis', annotated_frame)
+        #cv2.imwrite("./Buffer/frame" + str(BufferFrames.index) + ".jpg", frame)
+
+        #30 FPS!
+        #fps = cap.get(cv2.CAP_PROP_FPS)
+        #print("----------------------------------------------------------------Frames per second:{0}".format(fps))
+        if BufferFrames.static_flag == True:
+            print("Collecting static frames.....")
+            while BufferFrames.index < 150:
+                BufferFrames.images.append(frame)
+                BufferFrames.index+=1
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break

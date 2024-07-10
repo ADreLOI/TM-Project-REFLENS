@@ -3,7 +3,7 @@ import math
 
 class Hand:
     MAX_THRESHOLD = 0  # Example threshold, adjust as needed
-    MIN_THRESHOLD = 0.20  # Example threshold, adjust as needed
+    MIN_THRESHOLD = 0  # Example threshold, adjust as needed
 
     def __init__(self, landmarks):
         self.landmarks = landmarks
@@ -138,10 +138,9 @@ class Hand:
                 self.is_finger_closed(self.ring_tip, self.ring_p) and
                 self.is_finger_closed(self.pinky_tip, self.pinky_p)
         )
-
+"""
     @property
     def sui(self):
-        """Determine if the gesture is 'three' (thumb, index, and middle fingers up)."""
         return (
                 self.is_thumb_in_position and
                 self.is_finger_closed(self.thumb_tip, self.middle_p) and
@@ -150,3 +149,4 @@ class Hand:
                 self.is_finger_closed(self.ring_tip, self.ring_p) and
                 self.is_finger_closed(self.pinky_tip, self.pinky_p)
         )
+"""
