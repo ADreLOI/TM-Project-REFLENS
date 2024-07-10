@@ -110,16 +110,17 @@ def process_stream(video_source):
         annotated_frame = results[0].plot(boxes=False)
 
         cv2.imshow('RefLens - Stream Analysis', annotated_frame)
+        if BufferFrames.static_flag == True:
+            print("COLLECTING FRAMES...")
+            BufferFrames.images.append(frame)
+            if len(BufferFrames.images) == 60:
+                BufferFrames.static_flag = False
+
         #cv2.imwrite("./Buffer/frame" + str(BufferFrames.index) + ".jpg", frame)
 
         #30 FPS!
         #fps = cap.get(cv2.CAP_PROP_FPS)
         #print("----------------------------------------------------------------Frames per second:{0}".format(fps))
-        if BufferFrames.static_flag == True:
-            print("Collecting static frames.....")
-            while BufferFrames.index < 150:
-                BufferFrames.images.append(frame)
-                BufferFrames.index+=1
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
