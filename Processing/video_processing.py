@@ -3,12 +3,11 @@ from ultralytics import YOLO
 import mediapipe as mp
 import importlib
 import os
-import time
-import threading
 
 from Dynamics.hand import Hand
 from Dynamics.body import Body
-from Dynamics.body import BufferFrames
+from Recording.FoulRecorder import BufferFrames
+
 
 def load_signal_detectors():
     """
@@ -67,7 +66,7 @@ def process_stream(video_source):
 
     # Open the video source (0 for webcam, or file path)
     cap = cv2.VideoCapture(video_source)
-    #cap.set(cv2.CAP_PROP_BUFFERSIZE, 1);
+    # cap.set(cv2.CAP_PROP_BUFFERSIZE, 1);
 
     if not cap.isOpened():
         print(f"Error: Unable to open video source {video_source}")
@@ -81,10 +80,12 @@ def process_stream(video_source):
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         # Process the frame for hand detection
         hands_detected = hands.process(frame_rgb)
-        # If hands are detected, draw landmarks and connections on the frame
-
         # YOLOv8 pose detection
         results = model(frame, conf=0.5)
+        # buffer inizialization
+        buffer = BufferFrames()
+
+        # If hands are detected, draw landmarks and connections on the frame
         if hands_detected.multi_hand_landmarks:
             # Landmarks of the hand detected
             handsLandmarks = hands_detected.multi_hand_landmarks[0]
@@ -103,24 +104,22 @@ def process_stream(video_source):
             hand = Hand(handsLandmarks)
             body = Body(body_keypoints)
 
+            buffer.update_buffer(frame)
+
             for detector_name, detector_function in signal_detectors.items():
-                detector_function(hand, body, cv2, frame)
-                # Introduce a small delay
+                detector_function(hand, body, cv2, frame, buffer)
 
         annotated_frame = results[0].plot(boxes=False)
 
         cv2.imshow('RefLens - Stream Analysis', annotated_frame)
-        if BufferFrames.static_flag == True:
-            print("COLLECTING FRAMES...")
-            BufferFrames.images.append(frame)
-            if len(BufferFrames.images) == 60:
-                BufferFrames.static_flag = False
 
-        #cv2.imwrite("./Buffer/frame" + str(BufferFrames.index) + ".jpg", frame)
 
-        #30 FPS!
-        #fps = cap.get(cv2.CAP_PROP_FPS)
-        #print("----------------------------------------------------------------Frames per second:{0}".format(fps))
+
+        # cv2.imwrite("./Buffer/frame" + str(BufferFrames.index) + ".jpg", frame)
+
+        # 30 FPS!
+        # fps = cap.get(cv2.CAP_PROP_FPS)
+        # print("----------------------------------------------------------------Frames per second:{0}".format(fps))
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
