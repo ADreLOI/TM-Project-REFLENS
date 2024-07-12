@@ -2,6 +2,7 @@ from pydantic import BaseModel
 from collections import namedtuple
 import math
 import numpy as np
+from ultralytics import YOLO
 
 # Definisce un namedtuple per i punti chiave
 Keypoint = namedtuple('Keypoint', ['x', 'y'])
@@ -25,6 +26,13 @@ class GetKeypoint(BaseModel):  # Definisce la classe GetKeypoint utilizzando Bas
     RIGHT_KNEE:     int = 14
     LEFT_ANKLE:     int = 15
     RIGHT_ANKLE:    int = 16
+
+class BufferFrames:
+    static_flag = False
+    counter = 0
+    images = []
+    def __init__(self):
+        print("Buffer inizializzato")
 
 
 class Body:  # Definisce la classe Body
@@ -140,31 +148,79 @@ class Body:  # Definisce la classe Body
             threshold = self.distance(self.right_elbow, self.right_wrist)
             return self.right_wrist.y < self.right_elbow.y and self.left_wrist.y < self.left_elbow.y and self.distance(self.left_shoulder, self.right_wrist) <= threshold and self.distance(self.right_shoulder, self.left_wrist) <= threshold
 
-
-    """
-    @property
-    def arms_rotating(self):
-        # Determina se le braccia stanno ruotando controllando se entrambi i bracci sono piegati
-        if self.is_left_arm_bending and self.is_right_arm_bending:
-            min_rotations = 2
-            i = 0
-            while i < min_rotations:
-                starting_timestamp = time.time()
-                starting_position = self.is_wrist_above_the_other
-                time.sleep(0.25)  # la rotazione dura approssimativamente 250 millisecondi
-                finishing_position = self.is_wrist_above_the_other
-                if starting_timestamp < time.time() and starting_position == finishing_position:
-                    i += 1
-            if i >= min_rotations:
-                return True
+    def detect_rotation(self, cv2):
+        print("Rotation function")
+        # Detect traveling position, then analyze bunch of frame after that and check if one wrist is moving down the other
+        # then checking another bunch of frames after to check if it is moving back to starting position.
+        if self.is_right_arm_bending and self.is_left_arm_bending and self.right_wrist.y < self.left_wrist.y and (
+                (self.right_wrist.y - self.left_wrist.y) < -0.10):
+            print("ARMS IN ABS ZONE; POSSIBLE TRAVELLING SIGNAL INCOMING; CHECKING...")
+            if len(BufferFrames.images) != 20:
+                BufferFrames.static_flag = True
             else:
-                return False
+                # Frames collected, starting to analyze
+                BufferFrames.static_flag = True
+                print("PUBLISHING THE VIDEO")
+                out = cv2.VideoWriter("./Recording/travelling/travelling.mp4", cv2.VideoWriter_fourcc(*"mp4v"), 10.0, (1280, 720))
+                for frame in BufferFrames.images:
+                    print(len(BufferFrames.images))
+                    out.write(frame)  # frame is a numpy.ndarray with shape (1280, 720, 3)
+                out.release()
 
-    @property
-    def is_wrist_above_the_other(self):
-        # Determina se un polso è sopra l'altro
-        if self.right_wrist.y <= self.left_wrist.y:
-            return True
+                # Load YOLOv8 pose model
+                model = YOLO('yolov8n-pose.pt')
+                i = 0
+                starting_position = BufferFrames.images[i]
+                is_rotating = False
+                finish = False
+                previous_frame = BufferFrames.images[i]
+
+                while i < len(BufferFrames.images):
+                    # Analyze the frame
+                    print("CYCLE LOOP")
+                    results = model(BufferFrames.images[i], conf=0.5)
+                    body_keypoints = results[0].keypoints.xyn.cpu().numpy()[0]
+                    body = Body(body_keypoints)
+                    if i != 0:
+                        # Can start to compare the frames
+                        if body.right_wrist.y <= starting_position.right_wrist.y or (
+                                (body.right_wrist.y - starting_position.right_wrist.y) < 0.21
+                                and (body.right_wrist.y - starting_position.right_wrist.y) > -0.21):
+                            # The wrist is going lower!
+                            is_rotating = True
+                            print("CURRENT FRAME Y(GOING DOWN):" + str(body.right_wrist.y))
+                            print("STARTING FRAME Y(GOING DOWN):" + str(starting_position.right_wrist.y))
+                        else:
+                            # Wrist can be starting to going up to reach starting position
+                            if body.right_wrist.y >= starting_position.right_wrist.y or (
+                                    (body.right_wrist.y - starting_position.right_wrist.y) < 0.21 and (
+                                    body.right_wrist.y - starting_position.right_wrist.y) > -0.21):
+                                is_rotating = True
+                                print("CURRENT FRAME Y(GOING UP):" + str(body.right_wrist.y))
+                                print("STARTING FRAME Y(GOING UP):" + str(starting_position.right_wrist.y))
+                            else:
+                                # Wrist not rotating correctly
+                                is_rotating = False
+                                print("ERROR NOT ROTATING")
+                                print("CURRENT FRAME Y:" + str(body.right_wrist.y))
+                                print("STARTING FRAME Y:" + str(starting_position.right_wrist.y))
+                                print("NUMBER FRAME:" + str(i))
+
+                                return is_rotating
+
+                        if ((previous_frame.right_wrist.y - body.right_wrist.y) < 0.10 and (
+                                previous_frame.right_wrist.y - body.right_wrist.y) > -0.10) and i == len(
+                                BufferFrames.images) - 1:
+                            print("TRAVELLING FINISHED AND ACCOMPLISHED")
+                            finish = True
+                        if not finish and i == len(BufferFrames.images) - 1:
+                            print("FINISHED WITHOUT DETECTING TRAVELLING")
+                            is_rotating = False
+                    else:
+                        print("STARTIN  ASSIGN")
+                        starting_position = body
+                    previous_frame = body
+                    i += 1
+                return is_rotating
         else:
-            return False
-    """
+            print(self.right_wrist.y - self.left_wrist.y)

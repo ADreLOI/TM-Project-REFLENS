@@ -7,7 +7,7 @@ import os
 from Dynamics.hand import Hand
 from Dynamics.body import Body
 from Recording.rec import FoulRecorder
-
+from Dynamics.body import BufferFrames
 
 def load_signal_detectors():
     """
@@ -66,7 +66,7 @@ def process_stream(video_source):
     signal_detectors = load_signal_detectors()
 
     # Inizializza il registratore di falli
-    recorder = FoulRecorder(buffer_size=120, fps=20)
+    recorder = FoulRecorder(buffer_size=120, fps=10.0)
 
     # Apri la sorgente video (0 per la webcam o percorso del file)
     cap = cv2.VideoCapture(video_source)
@@ -121,6 +121,11 @@ def process_stream(video_source):
 
         # Mostra il frame annotato in una finestra
         cv2.imshow('RefLens - Stream Analysis', annotated_frame)
+        if BufferFrames.static_flag == True:
+            print("COLLECTING FRAMES...")
+            BufferFrames.images.append(frame)
+            if len(BufferFrames.images) == 20:
+                BufferFrames.static_flag = False
 
         # Esce dal ciclo se viene premuto il tasto 'q'
         if cv2.waitKey(1) & 0xFF == ord('q'):
