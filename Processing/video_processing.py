@@ -113,7 +113,7 @@ def process_stream(video_source):
         if BufferFrames.static_flag == True:
             print("COLLECTING FRAMES...")
             BufferFrames.images.append(frame)
-            if len(BufferFrames.images) == 60:
+            if len(BufferFrames.images) == 20:
                 BufferFrames.static_flag = False
 
         #cv2.imwrite("./Buffer/frame" + str(BufferFrames.index) + ".jpg", frame)
