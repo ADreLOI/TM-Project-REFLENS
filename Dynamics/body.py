@@ -152,17 +152,16 @@ class Body:  # Definisce la classe Body
 
     def detect_rotation(self, cv2):
         print("Rotation function")
-        # Detect traveling position, then analyze bunch of frame after that and check if one wrist is moving down the other
-        # then checking another bunch of frames after to check if it is moving back to starting position.
+        # Rileva il fallo di travelling, analizza i frame successivi e deduce se è avvanuto
         if self.is_right_arm_bending and self.is_left_arm_bending and self.right_wrist.y < self.left_wrist.y and (
                 (self.right_wrist.y - self.left_wrist.y) < -0.10):
             print("ARMS IN ABS ZONE; POSSIBLE TRAVELLING SIGNAL INCOMING; CHECKING...")
+            #Controllo del flag buffer frames
             if len(BufferFrames.images) != 20:
                 BufferFrames.static_flag = True
             else:
-                # Frames collected, starting to analyze
+                # I frames sono stati collezionati, posso iniziare ad analizzarli
                 BufferFrames.static_flag = True
-                print("PUBLISHING THE VIDEO")
                 # Definisce la directory e il nome del file
                 directory = f"Recording/travelling"
                 if not os.path.exists(directory):
@@ -173,50 +172,45 @@ class Body:  # Definisce la classe Body
                 out = cv2.VideoWriter(file_name, fourcc, 10, (width, height))
                 for frame in BufferFrames.images:
                     print(len(BufferFrames.images))
-                    out.write(frame)  # frame is a numpy.ndarray with shape (1280, 720, 3)
+                    out.write(frame)
                 out.release()
 
                 # Load YOLOv8 pose model
                 model = YOLO('yolov8n-pose.pt')
                 i = 0
+                #Primo frame, contraddistingue la posizione iniziale del polso, a cui saranno confrontati tutti i frames
                 starting_position = BufferFrames.images[i]
+                #Flag di controllo
                 is_rotating = False
                 finish = False
+                #Frame precedente a quello che si analizza
                 previous_frame = BufferFrames.images[i]
 
                 while i < len(BufferFrames.images):
-                    # Analyze the frame
-                    print("CYCLE LOOP")
+                    # Analisi del frame
                     results = model(BufferFrames.images[i], conf=0.5)
                     body_keypoints = results[0].keypoints.xyn.cpu().numpy()[0]
                     body = Body(body_keypoints)
                     if i != 0:
-                        # Can start to compare the frames
+                        # Posso iniziare a confrontare i frame tra di loro
                         if body.right_wrist.y <= starting_position.right_wrist.y or (
                                 (body.right_wrist.y - starting_position.right_wrist.y) < 0.21
                                 and (body.right_wrist.y - starting_position.right_wrist.y) > -0.21):
-                            # The wrist is going lower!
+                            # Il polso sta andando sotto
                             is_rotating = True
-                            print("CURRENT FRAME Y(GOING DOWN):" + str(body.right_wrist.y))
-                            print("STARTING FRAME Y(GOING DOWN):" + str(starting_position.right_wrist.y))
+                            #print("CURRENT FRAME Y(GOING DOWN):" + str(body.right_wrist.y))
                         else:
-                            # Wrist can be starting to going up to reach starting position
+                            #IL polso può risalire dopo aver raggiunto il punto più basso
                             if body.right_wrist.y >= starting_position.right_wrist.y or (
                                     (body.right_wrist.y - starting_position.right_wrist.y) < 0.21 and (
                                     body.right_wrist.y - starting_position.right_wrist.y) > -0.21):
                                 is_rotating = True
-                                print("CURRENT FRAME Y(GOING UP):" + str(body.right_wrist.y))
-                                print("STARTING FRAME Y(GOING UP):" + str(starting_position.right_wrist.y))
                             else:
-                                # Wrist not rotating correctly
+                                # Il braccio non ruota correttamente
                                 is_rotating = False
                                 print("ERROR NOT ROTATING")
-                                print("CURRENT FRAME Y:" + str(body.right_wrist.y))
-                                print("STARTING FRAME Y:" + str(starting_position.right_wrist.y))
-                                print("NUMBER FRAME:" + str(i))
-
                                 return is_rotating
-
+                        #Controllo col frame precedente, e controllo se il ciclo sta per finire
                         if ((previous_frame.right_wrist.y - body.right_wrist.y) < 0.10 and (
                                 previous_frame.right_wrist.y - body.right_wrist.y) > -0.10) and i == len(
                                 BufferFrames.images) - 1:
@@ -226,10 +220,10 @@ class Body:  # Definisce la classe Body
                             print("FINISHED WITHOUT DETECTING TRAVELLING")
                             is_rotating = False
                     else:
-                        print("STARTIN  ASSIGN")
                         starting_position = body
                     previous_frame = body
                     i += 1
                 return is_rotating
         else:
+            #Print di controllo
             print(self.right_wrist.y - self.left_wrist.y)
