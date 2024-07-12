@@ -1,14 +1,8 @@
-def travelling(hand, body, cv2, frame,recorder):
+# signal_detection/travelling.py
+from . import draw_text_with_logo
+
+
+def travelling(hand, body, cv2, frame, recorder):
     if body.detect_rotation(cv2):
-        cv2.putText(
-            img=frame,
-            text="TRAVELLING",
-            org=(50, 50),
-            fontFace=cv2.FONT_HERSHEY_SIMPLEX,
-            fontScale=1,
-            color=(0, 255, 0),
-            thickness=2
-        )
-        cv2.imwrite("./Buffer/Travelling.jpg", frame)
-    else:
-        print("NO")
+        # Mostra il messaggio "Travelling!" sul frame
+        draw_text_with_logo(frame, "Travelling!")

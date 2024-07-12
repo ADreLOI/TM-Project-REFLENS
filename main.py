@@ -1,4 +1,3 @@
-# main.py
 import tkinter as tk
 from tkinter import filedialog
 from PIL import Image, ImageTk, ImageEnhance
@@ -47,7 +46,7 @@ y_position = (screen_height - window_height) // 2
 root.geometry(f"{window_width}x{window_height}+{x_position}+{y_position}")
 
 # Imposta il colore di sfondo della finestra
-root.configure(bg='#2E3440')
+root.configure(bg='#E8E6D1')
 
 # Funzione per creare un pulsante con immagine e effetto hover
 def create_image_button(canvas, image_path, x, y, command):
@@ -55,7 +54,7 @@ def create_image_button(canvas, image_path, x, y, command):
     img = Image.open(image_path)
     img.thumbnail((100, 100), Image.LANCZOS)  # Ridimensiona l'immagine per adattarla a (100, 100)
     # Aggiunge sfondo all'immagine
-    img_with_bg = Image.new("RGBA", (100, 100), "#2E3440")
+    img_with_bg = Image.new("RGBA", (100, 100), "#E8E6D1")
     img_with_bg.paste(img, ((100 - img.size[0]) // 2, (100 - img.size[1]) // 2), img)
     photo = ImageTk.PhotoImage(img_with_bg)
 
@@ -86,22 +85,42 @@ def create_image_button(canvas, image_path, x, y, command):
     canvas.tag_bind(button_id, "<Button-1>", on_click)
 
 # Crea un canvas per contenere i pulsanti e il testo
-canvas = tk.Canvas(root, bg="#2E3440", highlightthickness=0)
+canvas = tk.Canvas(root, bg="#E8E6D1", highlightthickness=0)
 canvas.pack(fill="both", expand=True)
 
-# Aggiunge un'etichetta con il nome dell'app
-app_name_label = tk.Label(root, text="RefLens", font=("Helvetica", 36, "bold"), fg="#D8DEE9", bg="#2E3440")
-app_name_label.place(relx=0.5, rely=0.1, anchor="center")
+# Load and resize the logo
+logo_path = os.path.join(current_dir, 'Assets', 'Loghi', 'mini_logo.jpg')
+logo = Image.open(logo_path)
+logo_width, logo_height = logo.size
+
+# Resize the logo to be slightly larger than the height of the "RefLens" text
+new_logo_height = 50  # Slightly larger than the text height of 40 pixels
+new_logo_width = int(new_logo_height * logo_width / logo_height)
+resized_logo = logo.resize((new_logo_width, new_logo_height), Image.LANCZOS)
+logo_photo = ImageTk.PhotoImage(resized_logo)
+
+# Create a frame to contain the "RefLens" label and the logo
+header_frame = tk.Frame(root, bg='#E8E6D1')
+header_frame.place(relx=0.5, rely=0.1, anchor="center")
+
+# Create and place the "RefLens" label
+app_name_label = tk.Label(header_frame, text="RefLens", font=("Segoe UI", 40, "bold"), fg="#000000", bg="#E8E6D1")
+app_name_label.pack(side="left")
+
+# Create and place the logo next to the "RefLens" text
+logo_label = tk.Label(header_frame, image=logo_photo, bg="#E8E6D1")
+logo_label.image = logo_photo  # Keep a reference to avoid garbage collection
+logo_label.pack(side="left")
 
 # Altri elementi dell'interfaccia grafica
-info_label = tk.Label(root, text="Select input method", font=("Helvetica", 18), fg="#D8DEE9", bg="#2E3440")
+info_label = tk.Label(root, text="Select input method", font=("Segoe UI", 20, "bold"), fg="#000000", bg="#E8E6D1")
 info_label.place(relx=0.5, rely=0.3, anchor="center")
 
 # Aggiunge etichette sopra i pulsanti
-webcam_label = tk.Label(root, text="Use Webcam", font=("Helvetica", 14), fg="#D8DEE9", bg="#2E3440")
+webcam_label = tk.Label(root, text="Use Webcam", font=("Segoe UI", 15), fg="#000000", bg="#E8E6D1")
 webcam_label.place(relx=0.25, rely=0.45, anchor="center")
 
-video_label = tk.Label(root, text="Use an Existing Video", font=("Helvetica", 14), fg="#D8DEE9", bg="#2E3440")
+video_label = tk.Label(root, text="Use an Existing Video", font=("Segoe UI", 15), fg="#000000", bg="#E8E6D1")
 video_label.place(relx=0.75, rely=0.45, anchor="center")
 
 # Crea pulsanti con immagini sul canvas

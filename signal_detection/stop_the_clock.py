@@ -1,11 +1,8 @@
 # signal_detection/stop_clock.py
+from . import draw_text_with_logo
+
 
 def stop_the_clock(hand, body, cv2, frame, recorder):
-    # Stampa le coordinate del polso sinistro, dell'orecchio sinistro e dell'occhio sinistro
-    print(
-        f"Left wrist: ({body.left_wrist.y}), Ear ({body.left_ear.y}), Eye ({body.left_eye.y}),"
-    )
-
     # Controlla se la mano è aperta, il braccio destro è sollevato e nessuna delle dita è chiusa
     if (hand.is_hand_opened and body.is_right_arm_up and not hand.is_hand_closed
             and not hand.is_one and not hand.is_two and not hand.is_three):
@@ -16,16 +13,9 @@ def stop_the_clock(hand, body, cv2, frame, recorder):
                 recorder.stop_recording()
             # Avvia una nuova registrazione per il tipo di fallo "stop_the_clock"
             recorder.start_recording("stop_the_clock")
-        # Mostra il messaggio "Stop the clock!" sul frame
-        cv2.putText(
-            img=frame,
-            text="Stop the clock!",
-            org=(50, 50),
-            fontFace=cv2.FONT_HERSHEY_SIMPLEX,
-            fontScale=1,
-            color=(0, 255, 0),
-            thickness=2
-        )
+
+        # Mostra il messaggio "Stop the clock!" sul frame con il logo
+        draw_text_with_logo(frame, "Stop the clock!")
     else:
         # Se si sta registrando e il tipo di fallo corrente è "stop_the_clock", ferma la registrazione
         if recorder.is_recording and recorder.current_foul_type == "stop_the_clock":

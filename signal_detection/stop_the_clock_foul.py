@@ -1,4 +1,6 @@
 # signal_detection/stop_clock_foul.py
+from . import draw_text_with_logo
+
 
 def stop_the_clock_foul(hand, body, cv2, frame, recorder):
     # Controlla se la mano è chiusa, il braccio destro è sollevato e la mano non è aperta
@@ -12,15 +14,7 @@ def stop_the_clock_foul(hand, body, cv2, frame, recorder):
             # Avvia una nuova registrazione per il tipo di fallo "stop_the_clock_foul"
             recorder.start_recording("stop_the_clock_foul")
         # Mostra il messaggio "Stop the clock foul!" sul frame
-        cv2.putText(
-            img=frame,
-            text="Stop the clock foul!",
-            org=(50, 100),
-            fontFace=cv2.FONT_HERSHEY_SIMPLEX,
-            fontScale=1,
-            color=(255, 0, 0),
-            thickness=2
-        )
+        draw_text_with_logo(frame, "Stop the clock foul!")
     else:
         # Se si sta registrando e il tipo di fallo corrente è "stop_the_clock_foul", ferma la registrazione
         if recorder.is_recording and recorder.current_foul_type == "stop_the_clock_foul":
