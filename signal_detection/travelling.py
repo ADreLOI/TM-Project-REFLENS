@@ -1,3 +1,4 @@
+"""
 def travelling(hand, body, cv2, frame, buffer):
     if body.detect_rotation():
         cv2.putText(
@@ -9,3 +10,4 @@ def travelling(hand, body, cv2, frame, buffer):
             color=(0, 255, 0),
             thickness=2
         )
+"""
