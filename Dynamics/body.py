@@ -2,6 +2,8 @@ from pydantic import BaseModel
 from collections import namedtuple
 import math
 import numpy as np
+import time
+import os
 from ultralytics import YOLO
 
 # Definisce un namedtuple per i punti chiave
@@ -161,7 +163,14 @@ class Body:  # Definisce la classe Body
                 # Frames collected, starting to analyze
                 BufferFrames.static_flag = True
                 print("PUBLISHING THE VIDEO")
-                out = cv2.VideoWriter("./Recording/travelling/travelling.mp4", cv2.VideoWriter_fourcc(*"mp4v"), 10.0, (1280, 720))
+                # Definisce la directory e il nome del file
+                directory = f"Recording/travelling"
+                if not os.path.exists(directory):
+                    os.makedirs(directory)
+                file_name = f"{directory}/travelling_{int(time.time())}.mp4"
+                height, width, layers = BufferFrames.images[0].shape
+                fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+                out = cv2.VideoWriter(file_name, fourcc, 10, (width, height))
                 for frame in BufferFrames.images:
                     print(len(BufferFrames.images))
                     out.write(frame)  # frame is a numpy.ndarray with shape (1280, 720, 3)
