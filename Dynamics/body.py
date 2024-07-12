@@ -1,59 +1,13 @@
-import os
-import glob
-import time
-
-import cv2
 from pydantic import BaseModel
 from collections import namedtuple
+import math
 import numpy as np
-from ultralytics import YOLO
 
-# Define a namedtuple for keypoints
+# Definisce un namedtuple per i punti chiave
 Keypoint = namedtuple('Keypoint', ['x', 'y'])
 
 
-class FoulRecorder:
-    def __init__(self, buffer_size=30):
-        self.buffer = []
-        self.buffer_size = buffer_size
-
-    def update_buffer(self, frame):
-        if len(self.buffer) >= self.buffer_size:
-            self.buffer.pop(0)
-        self.buffer.append(frame)
-
-    def save_foul(self, foul_type):
-        if not self.buffer:
-            return
-
-        # Define directory and file name
-        directory = f"Processing/{foul_type}"
-        if not os.path.exists(directory):
-            os.makedirs(directory)
-        file_name = f"{directory}/{foul_type}_{int(time.time())}.mp4"
-
-        # Define video writer
-        height, width, layers = self.buffer[0].shape
-        fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-        out = cv2.VideoWriter(file_name, fourcc, 20.0, (width, height))
-
-        # Write frames to video
-        for frame in self.buffer:
-            out.write(frame)
-
-        out.release()
-        print(f"Foul video saved: {file_name}")
-
-        # Clear the buffer
-        self.buffer.clear()
-class BufferFrames:
-    static_flag = False
-    counter = 0
-    images = []
-    def __init__(self):
-        print("Buffer inizializzato")
-
-class GetKeypoint(BaseModel):
+class GetKeypoint(BaseModel):  # Definisce la classe GetKeypoint utilizzando BaseModel di Pydantic
     NOSE:           int = 0
     LEFT_EYE:       int = 1
     RIGHT_EYE:      int = 2
@@ -73,17 +27,50 @@ class GetKeypoint(BaseModel):
     RIGHT_ANKLE:    int = 16
 
 
-class Body:
+class Body:  # Definisce la classe Body
     def __init__(self, body_keypoints: np.ndarray):
+        # Inizializza la classe Body con i punti chiave del corpo
         self.body_keypoints = [Keypoint(*keypoint) for keypoint in body_keypoints]
         self.keypoints = GetKeypoint()
         self.init_body()
 
     def get_coordinates(self, keypoint_name: str):
+        # Ottiene le coordinate di un punto chiave dato il suo nome
         keypoint_index = getattr(self.keypoints, keypoint_name)
         return self.body_keypoints[keypoint_index]
 
+    def distance(self, point1, point2):
+        # Calcola la distanza euclidea tra due punti di riferimento.
+        distance = math.sqrt(
+            (point1.x - point2.x) ** 2 +
+            (point1.y - point2.y) ** 2
+        )
+        return distance
+
+    def dot_product(self, point1, point2, point3):
+        # Calcola il prodotto scalare dei vettori punto1->punto2 e punto2->punto3.
+        return (point2.x - point1.x) * (point3.x - point2.x) + (point2.y - point1.y) * (point3.y - point2.y)
+
+    def calculate_angle(self, point1, point2, point3):
+        # Calcola il prodotto scalare.
+        dot = self.dot_product(point1, point2, point3)
+
+        # Calcola le distanze dei vettori.
+        mag1 = self.distance(point1, point2)
+        mag2 = self.distance(point2, point3)
+
+        # Calcola il coseno dell'angolo.
+        if mag1 == 0 or mag2 == 0:
+            return False  # Evita la divisione per zero
+
+        cos_angle = dot / (mag1 * mag2)
+
+        # Verifica se il valore del coseno è entro la soglia per un gomito esteso.
+        # Per un gomito esteso, cos(theta) dovrebbe essere vicino a -1 (ad esempio, da -0.9 a -1.0)
+        return -1.1 <= cos_angle <= -0.8
+
     def init_body(self):
+        # Inizializza i punti chiave del corpo utilizzando i nomi definiti in GetKeypoint
         self.nose = self.get_coordinates('NOSE')
         self.left_eye = self.get_coordinates('LEFT_EYE')
         self.right_eye = self.get_coordinates('RIGHT_EYE')
@@ -104,18 +91,21 @@ class Body:
 
     @property
     def is_left_arm_up(self):
+        # Determina se il braccio sinistro è sollevato controllando le coordinate dei punti chiave
         return (self.left_wrist.y < self.left_eye.y < self.left_ear.y and
                 self.left_wrist.y < self.left_elbow.y < self.left_shoulder.y and
                 self.left_elbow.y < self.left_eye.y < self.left_ear.y)
 
     @property
     def is_right_arm_up(self):
+        # Determina se il braccio destro è sollevato controllando le coordinate dei punti chiave
         return (self.right_wrist.y < self.right_eye.y < self.right_ear.y and
                 self.right_wrist.y < self.right_elbow.y < self.right_shoulder.y and
                 self.right_elbow.y < self.right_eye.y < self.right_ear.y)
 
     @property
     def is_left_arm_bending(self):
+        # Determina se il braccio sinistro è piegato basandosi sulle coordinate dei punti chiave
         if self.left_hip.y > self.left_wrist.y > self.left_shoulder.y:
             if self.left_shoulder.x < self.right_shoulder.x or self.right_shoulder.x == self.left_shoulder.x:
                 return self.left_wrist.x > self.left_shoulder.x or self.left_wrist.x == self.left_shoulder.x
@@ -124,7 +114,7 @@ class Body:
 
     @property
     def is_right_arm_bending(self):
-
+        # Determina se il braccio destro è piegato basandosi sulle coordinate dei punti chiave
         if self.right_hip.y > self.right_wrist.y > self.right_shoulder.y:
             if self.right_shoulder.x > self.left_shoulder.x or self.right_shoulder.x == self.left_shoulder.x:
                 return self.right_wrist.x < self.right_shoulder.x or self.right_wrist.x == self.right_shoulder.x
@@ -132,13 +122,36 @@ class Body:
                 return self.right_wrist.x > self.right_shoulder.x or self.right_wrist.x == self.right_shoulder.x
 
     @property
+    def is_left_arm_extended(self):
+        # Determina se il braccio sinistro è esteso basandosi sulle coordinate dei punti chiave
+        if self.left_hip.y > self.left_wrist.y:
+            return self.calculate_angle(self.left_elbow, self.left_shoulder, self.left_wrist)
+
+    @property
+    def is_right_arm_extended(self):
+        # Determina se il braccio destro è esteso basandosi sulle coordinate dei punti chiave
+        if self.right_hip.y > self.right_wrist.y:
+            return self.calculate_angle(self.right_elbow, self.right_shoulder, self.right_wrist)
+
+    @property
+    def are_forearms_crossed(self):
+        # Determina se gli avrambracci effettuano una 'X'
+        if self.right_hip.y > self.right_wrist.y > self.right_shoulder.y and self.left_hip.y > self.left_wrist.y > self.left_shoulder.y:
+            threshold = self.distance(self.right_elbow, self.right_wrist)
+            return self.right_wrist.y < self.right_elbow.y and self.left_wrist.y < self.left_elbow.y and self.distance(self.left_shoulder, self.right_wrist) <= threshold and self.distance(self.right_shoulder, self.left_wrist) <= threshold
+
+
+    """
+    @property
     def arms_rotating(self):
+        # Determina se le braccia stanno ruotando controllando se entrambi i bracci sono piegati
         if self.is_left_arm_bending and self.is_right_arm_bending:
             min_rotations = 2
             i = 0
             while i < min_rotations:
                 starting_timestamp = time.time()
                 starting_position = self.is_wrist_above_the_other
+                time.sleep(0.25)  # la rotazione dura approssimativamente 250 millisecondi
                 finishing_position = self.is_wrist_above_the_other
                 if starting_timestamp < time.time() and starting_position == finishing_position:
                     i += 1
@@ -149,83 +162,9 @@ class Body:
 
     @property
     def is_wrist_above_the_other(self):
-        if self.left_wrist.y <= self.right_wrist.y:
+        # Determina se un polso è sopra l'altro
+        if self.right_wrist.y <= self.left_wrist.y:
             return True
         else:
             return False
-
-    def detect_rotation(self,cv2):
-        print("Rotation function")
-        #Detect traveling position, then analyze bunch of frame after that and check if one wrist is moving down the other
-        #then checking another bunch of frames after to check if it is moving back to starting position.
-        if self.is_right_arm_bending and self.is_left_arm_bending and self.right_wrist.y < self.left_wrist.y and ((self.right_wrist.y - self.left_wrist.y) < -0.10):
-            print("ARMS IN ABS ZONE; POSSIBLE TRAVELLING SIGNAL INCOMING; CHECKING...")
-            if len(BufferFrames.images) != 20:
-                BufferFrames.static_flag = True
-            else:
-                #Frames collected, starting to analyze
-                BufferFrames.static_flag = True
-                print("PUBLISHING THE VIDEO")
-                out = cv2.VideoWriter("output.mp4", cv2.VideoWriter_fourcc(*"mp4v"), 20.0, (1280,720))
-                for frame in BufferFrames.images:
-                    print(len(BufferFrames.images))
-                    out.write(frame)  # frame is a numpy.ndarray with shape (1280, 720, 3)
-                out.release()
-
-                # Load YOLOv8 pose model
-                model = YOLO('yolov8n-pose.pt')
-                i=0
-                starting_position = BufferFrames.images[i]
-                is_rotating = False
-                finish = False
-                previous_frame = BufferFrames.images[i]
-
-                while i<len(BufferFrames.images):
-                    #Analyze the frame
-                    print("CYCLE LOOP")
-                    results = model(BufferFrames.images[i], conf=0.5)
-                    body_keypoints = results[0].keypoints.xyn.cpu().numpy()[0]
-                    body = Body(body_keypoints)
-                    if i!=0:
-                    #Can start to compare the frames
-                        if body.right_wrist.y <= starting_position.right_wrist.y or (
-                                (body.right_wrist.y-starting_position.right_wrist.y) < 0.21
-                                and (body.right_wrist.y-starting_position.right_wrist.y) > -0.21):
-                        #The wrist is going lower!
-                            is_rotating = True
-                            print("CURRENT FRAME Y(GOING DOWN):" + str(body.right_wrist.y))
-                            print("STARTING FRAME Y(GOING DOWN):" + str(starting_position.right_wrist.y))
-                        else:
-                            #Wrist can be starting to going up to reach starting position
-                            if body.right_wrist.y >= starting_position.right_wrist.y or (
-                                    (body.right_wrist.y - starting_position.right_wrist.y) < 0.21 and (
-                                    body.right_wrist.y - starting_position.right_wrist.y) > -0.21):
-                                is_rotating = True
-                                print("CURRENT FRAME Y(GOING UP):" + str(body.right_wrist.y))
-                                print("STARTING FRAME Y(GOING UP):" + str(starting_position.right_wrist.y))
-                            else:
-                            # Wrist not rotating correctly
-                                is_rotating = False
-                                print("ERROR NOT ROTATING")
-                                print("CURRENT FRAME Y:"+ str(body.right_wrist.y))
-                                print("STARTING FRAME Y:"+ str(starting_position.right_wrist.y))
-                                print("NUMBER FRAME:"+ str(i))
-
-                                return is_rotating
-
-                        if ((previous_frame.right_wrist.y-body.right_wrist.y) < 0.10 and (previous_frame.right_wrist.y-body.right_wrist.y) > -0.10) and i==len(BufferFrames.images)-1 :
-                            print("TRAVELLING FINISHED AND ACCOMPLISHED")
-                            finish = True
-                        if not finish and i == len(BufferFrames.images)-1:
-                            print("FINISHED WITHOUT DETECTING TRAVELLING")
-                            is_rotating = False
-                    else:
-                        print("STARTIN  ASSIGN")
-                        starting_position = body
-                    previous_frame = body
-                    i+=1
-                return is_rotating
-        else:
-            print(self.right_wrist.y - self.left_wrist.y)
-
-
+    """
