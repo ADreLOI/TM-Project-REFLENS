@@ -3,41 +3,32 @@ from ultralytics import YOLO
 import mediapipe as mp
 import importlib
 import os
-import time
-import threading
 
 from Dynamics.hand import Hand
 from Dynamics.body import Body
+from Recording.rec import FoulRecorder
 from Dynamics.body import BufferFrames
 
 def load_signal_detectors():
     """
-        Dynamically loads signal detection functions from signal_detection package.
+    Carica dinamicamente le funzioni di rilevamento dei segnali dal package signal_detection.
 
-        Returns:
-            dict: A dictionary containing signal detector functions mapped by their names.
-        """
+    Ritorna:
+        dict: Un dizionario contenente le funzioni di rilevamento dei segnali mappate dai loro nomi.
+    """
     signal_detectors = {}
     signal_detection_folder = os.path.join(os.path.dirname(__file__), '..', 'signal_detection')
 
     print(f"Looking for signal detectors in folder: {signal_detection_folder}")
 
-    # Iterate through files in the signal detection folder
+    # Itera attraverso i file nella cartella di rilevamento dei segnali
     for file in os.listdir(signal_detection_folder):
-        # Check if the file is a Python script and not the package initializer
+        # Controlla se il file è uno script Python e non l'inizializzatore del pacchetto
         if file.endswith('.py') and file != '__init__.py':
-            # Extract module name from file name
             module_name = file[:-3]
-            print(f"Found module: {module_name}")
-
-            # Import the module dynamically
             module = importlib.import_module(f'signal_detection.{module_name}')
-            print(f"Imported module: {module}")
-
-            # Get the detection function from the module
             detector_function = getattr(module, f'{module_name}', None)
             if detector_function:
-                print(f"Loaded detector function: {module_name}")
                 signal_detectors[module_name] = detector_function
             else:
                 print(f"Warning: No {module_name} function found in module {module}")
@@ -47,95 +38,104 @@ def load_signal_detectors():
 
 def process_stream(video_source):
     """
-    Process video stream from either webcam or file for signal detection.
+    Elabora il flusso video dalla webcam o dal file per il rilevamento dei segnali.
 
     Args:
-        video_source (int or str): Video source, either webcam (0) or file path.
+        video_source (int or str): Sorgente video, webcam (0) o percorso del file.
     """
-    # Load YOLOv8 pose model
+    # Carica il modello YOLOv8 pose
     model = YOLO('yolov8n-pose.pt')
 
-    # Initialize MediaPipe Hands
+    # Inizializza MediaPipe Hands per il rilevamento delle mani
     mp_hands = mp.solutions.hands
-    hands = mp_hands.Hands(static_image_mode=False, max_num_hands=1, min_detection_confidence=0.5,
-                           min_tracking_confidence=0.5)
+    hands = mp_hands.Hands(static_image_mode=False, max_num_hands=1, min_detection_confidence=0.5, min_tracking_confidence=0.5)
 
-    # Initialize drawing utilities
+    # Inizializza le utilità di disegno di MediaPipe
     mp_drawing = mp.solutions.drawing_utils
 
+    # Carica le funzioni di rilevamento dei segnali
     signal_detectors = load_signal_detectors()
 
-    # Open the video source (0 for webcam, or file path)
+    # Inizializza il registratore di falli
+    recorder = FoulRecorder(buffer_size=120, fps=10.0)
+
+    # Apri la sorgente video (0 per la webcam o percorso del file)
     cap = cv2.VideoCapture(video_source)
-    #cap.set(cv2.CAP_PROP_BUFFERSIZE, 1);
 
     if not cap.isOpened():
         print(f"Error: Unable to open video source {video_source}")
         return
+
     while cap.isOpened():
         success, frame = cap.read()
         if not success:
             break
 
-        # Convert the frame to RGB for MediaPipe
+        # Converti il frame da BGR a RGB per MediaPipe
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        # Process the frame for hand detection
+
+        # Elabora il frame per il rilevamento delle mani
         hands_detected = hands.process(frame_rgb)
-        # If hands are detected, draw landmarks and connections on the frame
 
-        # YOLOv8 pose detection
-        results = model(frame, conf=0.5)
+        # Rilevamento della posa con YOLOv8
+        results = model(frame, conf=0.5, verbose=False)
+
+        # Prepara il frame annotato per l'output grafico
+        annotated_frame = results[0].plot(boxes=False)
+
+        # Aggiorna il buffer di registrazione video con il frame originale
+        recorder.update_buffer(frame)
+
+        hand = None
+        # Se vengono rilevate le mani, disegna i landmark su annotated_frame
         if hands_detected.multi_hand_landmarks:
-            # Landmarks of the hand detected
             handsLandmarks = hands_detected.multi_hand_landmarks[0]
-
             for hand_landmarks in hands_detected.multi_hand_landmarks:
                 mp_drawing.draw_landmarks(
-                    frame,
+                    annotated_frame,
                     hand_landmarks,
                     mp_hands.HAND_CONNECTIONS,
                     mp_drawing.DrawingSpec(color=(176, 132, 255), thickness=2, circle_radius=2),
                     mp_drawing.DrawingSpec(color=(0, 0, 255), thickness=2)
                 )
-            # YOLOv8 pose detection
-            body_keypoints = results[0].keypoints.xyn.cpu().numpy()[0]
-
             hand = Hand(handsLandmarks)
+
+        # Se YOLO ha rilevato almeno una persona, estrai i punti chiave del corpo
+        if len(results[0].keypoints) > 0 and len(results[0].keypoints.xyn) > 0:
+            body_keypoints = results[0].keypoints.xyn.cpu().numpy()[0]
             body = Body(body_keypoints)
 
+            # Chiama le funzioni di rilevamento dei segnali se i dati necessari sono presenti
             for detector_name, detector_function in signal_detectors.items():
-                detector_function(hand, body, cv2, frame)
-                # Introduce a small delay
+                detector_function(hand, body, cv2, annotated_frame, recorder)
 
-        annotated_frame = results[0].plot(boxes=False)
-
-        cv2.imshow('RefLens - Stream Analysis', annotated_frame)
-        if BufferFrames.static_flag == True:
-            print("COLLECTING FRAMES...")
+        # Gestione buffer per segnale travelling
+        if BufferFrames.static_flag:
+            print("COLLECTING FRAMES FOR TRAVELLING...")
             BufferFrames.images.append(frame)
-            if len(BufferFrames.images) == 20:
+            if len(BufferFrames.images) >= 20:
                 BufferFrames.static_flag = False
 
-        #cv2.imwrite("./Buffer/frame" + str(BufferFrames.index) + ".jpg", frame)
+        # Mostra il frame annotato completo in una finestra
+        cv2.imshow('RefLens - Stream Analysis', annotated_frame)
 
-        #30 FPS!
-        #fps = cap.get(cv2.CAP_PROP_FPS)
-        #print("----------------------------------------------------------------Frames per second:{0}".format(fps))
-
+        # Esce dal ciclo se viene premuto il tasto 'q'
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
+    # Rilascia la sorgente video e chiudi tutte le finestre
     cap.release()
     cv2.destroyAllWindows()
 
 
 def process_video(video_path=None):
     """
-    Process video file for signal detection.
+    Elabora il file video per il rilevamento dei segnali.
+
     Args:
-        video_path (str): Path to the video file. If None, uses webcam.
+        video_path (str): Percorso del file video. Se None, usa la webcam.
     """
     if video_path is None:
-        process_stream(0)  # Use webcam
+        process_stream(0)  # Usa la webcam
     else:
-        process_stream(video_path)  # Use video file
+        process_stream(video_path)  # Usa il file video
