@@ -1,3 +1,5 @@
+<a id="top"></a>
+
 <div align="center">
 
   <img src="./Assets/Loghi/logo_bis.jpg" alt="RefLens Logo" width="500"/>
@@ -29,7 +31,7 @@
   - [Installation Steps](#installation-steps)
 - [Usage](#usage)
 - [Automatic Highlight Recording](#automatic-highlight-recording)
-- [Authors & Credits](#authors--credits)
+- [Team](#team)
 - [License](#license)
 
 ---
@@ -161,11 +163,14 @@ When a FIBA referee signal is detected, **RefLens** activates its `FoulRecorder`
 
 ---
 
-## Authors & Credits
+## Team
 
-Developed by:
-- **Andrea Lo Iacono** — [<andrea.loiacono@studenti.unitn.it>](mailto:andrea.loiacono@studenti.unitn.it)
-- **Matthew De Marco** — [<matthew.demarco@studenti.unitn.it>](mailto:matthew.demarco@studenti.unitn.it)
+| Team member | GitHub | LinkedIn | Email |
+| --- | --- | --- | --- |
+| Andrea Lo Iacono | [@ADreLOI](https://github.com/ADreLOI) | [LinkedIn](https://www.linkedin.com/in/adreloi) | [andrea.loiacono@studenti.unitn.it](mailto:andrea.loiacono@studenti.unitn.it) |
+| Matthew De Marco | [@MattDema](https://github.com/MattDema) | Profile link pending confirmation | [matthew.demarco@studenti.unitn.it](mailto:matthew.demarco@studenti.unitn.it) |
+
+> LinkedIn profile links are included only when confirmed, so the README never directs visitors to the wrong person.
 
 *Università degli Studi di Trento — Course: Tecnologie Multimediali*
 
@@ -174,3 +179,5 @@ Developed by:
 ## License
 
 Distributed under the **GNU General Public License v3.0 (GPL-3.0)**. See [`LICENSE`](./LICENSE) for more information.
+
+[⬆ Back to top](#top)
