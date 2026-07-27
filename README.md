@@ -178,7 +178,7 @@ When a FIBA referee signal is detected, **RefLens** activates its `FoulRecorder`
 
 ## Acknowledgments
 
-RefLens was developed for the **Multimedia Technologies** course at the University of Trento under the guidance of [**Prof. Francesco G.B. De Natale**](https://disi.unitn.it/~denatale/). We thank him for the course foundations, technical guidance, and feedback that supported the design and realization of the project.
+RefLens was developed for the **Multimedia Technologies** course at the University of Trento under the guidance of [**Prof. Francesco G.B. De Natale**](https://disi.unitn.it/~denatale/), with support from [**Prof. Andrea Rosani**](https://www.unibz.it/it/faculties/engineering/academic-staff/person/43727-andrea-rosani). We thank them for the course foundations, technical guidance, and feedback that supported the design and realization of the project.
 
 FIBA material is referenced solely as the application domain and source of the official referee-signal vocabulary; no formal collaboration with FIBA is claimed.
 
