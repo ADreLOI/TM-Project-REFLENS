@@ -6,12 +6,21 @@
 
   # RefLens — FIBA Basketball Referee Signal Detector
 
-  [![Python Version](https://img.shields.io/badge/Python-3.9%2B-blue?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
-  [![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white)](https://pytorch.org/)
-  [![YOLOv8](https://img.shields.io/badge/YOLOv8-Pose_Estimation-00FFFF?style=for-the-badge&logo=ultralytics&logoColor=black)](https://docs.ultralytics.com/)
-  [![MediaPipe](https://img.shields.io/badge/MediaPipe-Hands-00599C?style=for-the-badge&logo=google&logoColor=white)](https://mediapipe.dev)
-  [![OpenCV](https://img.shields.io/badge/OpenCV-Computer_Vision-5C3EE8?style=for-the-badge&logo=opencv&logoColor=white)](https://opencv.org/)
-  [![License](https://img.shields.io/badge/License-GPL_v3-blue.svg?style=for-the-badge)](./LICENSE)
+  <p align="center">
+    <img src="https://img.shields.io/badge/version-1.0.0-2563EB?style=for-the-badge" alt="Version 1.0.0" />
+    <a href="https://github.com/ADreLOI/TM-Project-REFLENS/stargazers"><img src="https://img.shields.io/github/stars/ADreLOI/TM-Project-REFLENS?style=for-the-badge&logo=github&label=Stars" alt="GitHub stars" /></a>
+    <a href="https://github.com/ADreLOI/TM-Project-REFLENS/graphs/contributors"><img src="https://img.shields.io/github/contributors/ADreLOI/TM-Project-REFLENS?style=for-the-badge" alt="Contributors" /></a>
+    <a href="https://github.com/ADreLOI/TM-Project-REFLENS/forks"><img src="https://img.shields.io/github/forks/ADreLOI/TM-Project-REFLENS?style=for-the-badge" alt="Forks" /></a>
+    <a href="https://github.com/ADreLOI/TM-Project-REFLENS/issues"><img src="https://img.shields.io/github/issues/ADreLOI/TM-Project-REFLENS?style=for-the-badge" alt="Open issues" /></a>
+    <img src="https://img.shields.io/github/repo-size/ADreLOI/TM-Project-REFLENS?style=for-the-badge" alt="Repository size" />
+    <img src="https://img.shields.io/github/last-commit/ADreLOI/TM-Project-REFLENS?style=for-the-badge" alt="Last commit" />
+    <img src="https://img.shields.io/github/license/ADreLOI/TM-Project-REFLENS?style=for-the-badge" alt="License" />
+  </p>
+
+  <p align="center">
+    <img src="https://img.shields.io/badge/course-Multimedia%20Technologies-0F766E?style=for-the-badge" alt="Multimedia Technologies" />
+    <img src="https://img.shields.io/badge/stack-Python%20%7C%20YOLOv8%20%7C%20MediaPipe-7C3AED?style=for-the-badge" alt="Python, YOLOv8, and MediaPipe" />
+  </p>
 
   **An AI-powered real-time computer vision system for recognizing official FIBA referee signals and automatically recording game video highlights.**
 
@@ -19,7 +28,8 @@
 
 ---
 
-## Table of Contents
+<details>
+<summary><h2>Table of Contents 📖</h2></summary>
 
 - [About The Project](#about-the-project)
   - [Purpose & Applications](#purpose--applications)
@@ -31,8 +41,11 @@
   - [Installation Steps](#installation-steps)
 - [Usage](#usage)
 - [Automatic Highlight Recording](#automatic-highlight-recording)
+- [Acknowledgments](#acknowledgments)
 - [Team](#team)
 - [License](#license)
+
+</details>
 
 ---
 
@@ -114,8 +127,8 @@ TM-Vision/
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/MattDema/TM-Vision.git
-   cd TM-Vision
+   git clone https://github.com/ADreLOI/TM-Project-REFLENS.git
+   cd TM-Project-REFLENS
    ```
 
 2. **Create and activate a virtual environment (recommended):**
@@ -163,6 +176,14 @@ When a FIBA referee signal is detected, **RefLens** activates its `FoulRecorder`
 
 ---
 
+## Acknowledgments
+
+RefLens was developed for the **Multimedia Technologies** course at the University of Trento under the guidance of [**Prof. Francesco G.B. De Natale**](https://disi.unitn.it/~denatale/). We thank him for the course foundations, technical guidance, and feedback that supported the design and realization of the project.
+
+FIBA material is referenced solely as the application domain and source of the official referee-signal vocabulary; no formal collaboration with FIBA is claimed.
+
+---
+
 ## Team
 
 | Team member | GitHub | LinkedIn | Email |
@@ -180,4 +201,10 @@ When a FIBA referee signal is detected, **RefLens** activates its `FoulRecorder`
 
 Distributed under the **GNU General Public License v3.0 (GPL-3.0)**. See [`LICENSE`](./LICENSE) for more information.
 
-[⬆ Back to top](#top)
+<p align="center">
+  <a href="#top" style="text-decoration: none;">
+    <img src="https://img.icons8.com/ios-filled/50/000000/up.png" alt="Back to Top" width="40" height="40"/>
+    <br>
+    <strong>Back to Top</strong>
+  </a>
+</p>
